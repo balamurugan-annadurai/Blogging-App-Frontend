@@ -1,29 +1,35 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Home } from '../pages/home';
 import { Login, Signup } from '../pages/auth';
-import { Blogs, BlogDetails, CreateBlog, MyBlogs } from '../pages/blog';
+import { Blogs, BlogDetails, CreateBlog, MyBlogs, EditBlog } from '../pages/blog';
 import { NotFound } from '../pages/notFound';
 import PrivateRoute from "./PrivateRoute";
+import PublicRoute from "./PublicRoute";
 import AppLayout from "../layout/AppLayout";
 
 const router = createBrowserRouter([
     {
-        element: <AppLayout />,  // Wrap ALL routes with AppLayout
+        element: <AppLayout />,
         children: [
             {
-                path: "/",
-                element: <Home />,
+                element: <PublicRoute />,
+                children: [
+                    {
+                        path: "/",
+                        element: <Home />,
+                    },
+                    {
+                        path: "/login",
+                        element: <Login />,
+                    },
+                    {
+                        path: "/signup",
+                        element: <Signup />,
+                    },
+                ]
             },
             {
-                path: "/login",
-                element: <Login />,
-            },
-            {
-                path: "/signup",
-                element: <Signup />,
-            },
-            {
-                element: <PrivateRoute />,  // Protect the below routes
+                element: <PrivateRoute />,
                 children: [
                     {
                         path: "/blogs",
@@ -41,6 +47,10 @@ const router = createBrowserRouter([
                         path: "/myblogs",
                         element: <MyBlogs />,
                     },
+                    {
+                        path: "/myblogs/edit/:id",
+                        element: <EditBlog />
+                    }
                 ],
             },
             {

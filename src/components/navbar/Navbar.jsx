@@ -1,98 +1,161 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import authService from './../../lib/services/auth';
 
 const Navbar = () => {
-    // Simulate login state (replace with real auth logic/context)
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [activeLink, setActiveLink] = useState("home");
+    const [user, setUser] = useState(null);
+    const [activeLink, setActiveLink] = useState("blogs");
+    const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
+    const token = localStorage.getItem("token");
+
+    useEffect(() => {
+        const verifyToken = async () => {
+            const user = localStorage.getItem("user");
+            if (!token) {
+                setUser(null);
+                if (user) localStorage.removeItem("user");
+                return;
+            }
+
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+                setUser(JSON.parse(storedUser));
+            }
+
+            try {
+                const response = await authService.verify();
+                const userData = response.data.user;
+                setUser(userData);
+                localStorage.setItem("user", JSON.stringify(userData));
+            } catch (err) {
+                console.error("Token verification failed:", err);
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setUser(null);
+            }
+        };
+
+        verifyToken();
+    }, [token]);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+        navigate('/login');
+        setMenuOpen(false);
+    };
 
     const linkClass = (id) => {
         const isActive = activeLink === id;
         return `
-      relative px-[10px] py-[3px] rounded-[5px] font-[600] 
-      transition-all duration-300 ease-in-out
-      ${isActive
-                ? "bg-[#08436B] text-[#ffffff] shadow-[0_10px_25px_rgba(0,0,0,0.3)]"
-                : "text-current"
-            }
-      focus:outline-none no-underline
-    `;
+            relative px-3 py-1 rounded-md font-semibold 
+            transition-all duration-300 ease-in-out
+            ${isActive ? "bg-[#08436B] text-white shadow-lg" : "text-[#08436B] hover:text-[#08436B]"}
+            focus:outline-none no-underline
+        `;
     };
 
-    const handleLogout = () => {
-        // Your logout logic here (clear tokens, etc)
-        setIsLoggedIn(false);
-        setActiveLink(""); // reset active link
-        navigate('/login'); // redirect to login page
-    };
+
 
     return (
         <header>
-            <nav className="flex justify-between items-center px-[30px] md:px-[100px] py-[30px]">
-                {/* Logo */}
+            <nav className="flex justify-between items-center px-6 md:px-24 py-4 bg-white shadow-md relative">
                 <div className="cursor-pointer flex items-center">
-                    <h1 className="text-[20px] font-bold text-[#08436B]">Blog App</h1>
+                    <h1
+                        onClick={() => {
+                            navigate('/');
+                            setMenuOpen(false);
+                        }}
+                        className="text-xl font-bold text-[#08436B]"
+                    >
+                        Blog App
+                    </h1>
                 </div>
 
-                {/* Nav Links based on login */}
-                {isLoggedIn ? (
-                    <>
-                        <ul
-                            className="text-[20px] flex gap-[50px] items-center list-none p-0 m-0 text-[#08436B]"
-                            style={{ fontWeight: "600" }}
-                        >
-                            <li>
-                                <Link
-                                    to="/blogs"
-                                    onClick={() => setActiveLink("home")}
-                                    className={linkClass("home")}
-                                >
-                                    Blogs
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/myblogs"
-                                    onClick={() => setActiveLink("about")}
-                                    className={linkClass("about")}
-                                >
-                                    My Blogs
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/create"
-                                    onClick={() => setActiveLink("products")}
-                                    className={linkClass("products")}
-                                >
-                                    Create Blog
-                                </Link>
-                            </li>
-                        </ul>
+                {/* Hamburger for mobile */}
+                <div className="md:hidden">
+                    <button
+                        aria-label="Toggle Menu"
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="text-[#08436B] text-3xl focus:outline-none"
+                    >
+                        <i className='bx bx-menu'></i>
+                    </button>
+                </div>
 
+                {/* Desktop Links */}
+                <ul className="hidden md:flex gap-12 items-center list-none m-0 p-0 font-semibold">
+                    {user ? (
+                        <>
+                            <li>
+                                <Link to="/blogs" onClick={() => setActiveLink("blogs")} className={linkClass("blogs")}>Blogs</Link>
+                            </li>
+                            <li>
+                                <Link to="/myblogs" onClick={() => setActiveLink("myblogs")} className={linkClass("myblogs")}>My Blogs</Link>
+                            </li>
+                            <li>
+                                <Link to="/create" onClick={() => setActiveLink("create")} className={linkClass("create")}>Create Blog</Link>
+                            </li>
+                            <li>
+                                <button onClick={handleLogout} className="bg-[#08436B] text-white px-4 py-1 rounded-md shadow-lg">Logout</button>
+                            </li>
+                        </>
+                    ) : (
+                        <>
+                            <li>
+                                <Link to="/login" className="bg-[#08436B] text-white px-4 py-2 rounded-md no-underline">Login</Link>
+                            </li>
+                            <li>
+                                <Link to="/signup" className="bg-[#08436B] text-white px-4 py-2 rounded-md no-underline">Signup</Link>
+                            </li>
+                        </>
+                    )}
+                </ul>
+
+                {/* Mobile Sidebar */}
+                <div className={`
+                    fixed top-0 left-0 h-full w-64 bg-[#08436B] text-white transform
+                    ${menuOpen ? 'translate-x-0' : '-translate-x-full'}
+                    transition-transform duration-300 ease-in-out
+                    z-50 flex flex-col p-6
+                `}>
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-lg font-bold">Menu</h2>
                         <button
-                            onClick={handleLogout}
-                            className="bg-[#08436B] text-[#ffffff] shadow-[0_10px_25px_rgba(0,0,0,0.3)] px-[13px] py-[5px] rounded-[5px] cursor-pointer"
+                            onClick={() => setMenuOpen(false)}
+                            className="text-white text-3xl focus:outline-none"
                         >
-                            Logout
+                            <i className="bx bx-x"></i>
                         </button>
-                    </>
-                ) : (
-                    <div className="flex gap-6">
-                        <Link
-                            to="/login"
-                            className="bg-[#08436B] text-[#ffffff] px-[13px] py-[5px] rounded-[5px] font-[600] no-underline"
-                        >
-                            Login
-                        </Link>
-                        <Link
-                            to="/signup"
-                            className="bg-[#08436B] text-[#ffffff] px-[13px] py-[5px] rounded-[5px] font-[600] no-underline"
-                        >
-                            Signup
-                        </Link>
                     </div>
+
+                    <ul className="flex flex-col gap-6 text-lg font-semibold">
+                        {user ? (
+                            <>
+                                <li><Link to="/blogs" onClick={() => { setActiveLink("blogs"); setMenuOpen(false); }}>Blogs</Link></li>
+                                <li><Link to="/myblogs" onClick={() => { setActiveLink("myblogs"); setMenuOpen(false); }}>My Blogs</Link></li>
+                                <li><Link to="/create" onClick={() => { setActiveLink("create"); setMenuOpen(false); }}>Create Blog</Link></li>
+                                <li>
+                                    <button onClick={handleLogout} className="bg-white text-[#08436B] px-4 py-2 rounded-md mt-6">Logout</button>
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                <li><Link to="/login" onClick={() => setMenuOpen(false)}>Login</Link></li>
+                                <li><Link to="/signup" onClick={() => setMenuOpen(false)}>Signup</Link></li>
+                            </>
+                        )}
+                    </ul>
+                </div>
+
+                {/* Overlay */}
+                {menuOpen && (
+                    <div
+                        className="fixed inset-0 bg-black opacity-50 z-40"
+                        onClick={() => setMenuOpen(false)}
+                    />
                 )}
             </nav>
         </header>
