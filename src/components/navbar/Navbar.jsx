@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import authService from './../../lib/services/auth';
 
 const Navbar = () => {
@@ -7,6 +7,7 @@ const Navbar = () => {
     const [activeLink, setActiveLink] = useState("blogs");
     const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const token = localStorage.getItem("token");
 
     useEffect(() => {
@@ -39,6 +40,15 @@ const Navbar = () => {
         verifyToken();
     }, [token]);
 
+    // Detect active link from URL path
+    useEffect(() => {
+        const path = location.pathname;
+        if (path.startsWith('/blogs')) setActiveLink("blogs");
+        else if (path.startsWith('/myblogs')) setActiveLink("myblogs");
+        else if (path.startsWith('/create')) setActiveLink("create");
+        else setActiveLink("");
+    }, [location.pathname]);
+
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -56,8 +66,6 @@ const Navbar = () => {
             focus:outline-none no-underline
         `;
     };
-
-
 
     return (
         <header>
@@ -90,13 +98,13 @@ const Navbar = () => {
                     {user ? (
                         <>
                             <li>
-                                <Link to="/blogs" onClick={() => setActiveLink("blogs")} className={linkClass("blogs")}>Blogs</Link>
+                                <Link to="/blogs" className={linkClass("blogs")}>Blogs</Link>
                             </li>
                             <li>
-                                <Link to="/myblogs" onClick={() => setActiveLink("myblogs")} className={linkClass("myblogs")}>My Blogs</Link>
+                                <Link to="/myblogs" className={linkClass("myblogs")}>My Blogs</Link>
                             </li>
                             <li>
-                                <Link to="/create" onClick={() => setActiveLink("create")} className={linkClass("create")}>Create Blog</Link>
+                                <Link to="/create" className={linkClass("create")}>Create Blog</Link>
                             </li>
                             <li>
                                 <button onClick={handleLogout} className="bg-[#08436B] text-white px-4 py-1 rounded-md shadow-lg">Logout</button>
@@ -134,9 +142,9 @@ const Navbar = () => {
                     <ul className="flex flex-col gap-6 text-lg font-semibold">
                         {user ? (
                             <>
-                                <li><Link to="/blogs" onClick={() => { setActiveLink("blogs"); setMenuOpen(false); }}>Blogs</Link></li>
-                                <li><Link to="/myblogs" onClick={() => { setActiveLink("myblogs"); setMenuOpen(false); }}>My Blogs</Link></li>
-                                <li><Link to="/create" onClick={() => { setActiveLink("create"); setMenuOpen(false); }}>Create Blog</Link></li>
+                                <li><Link to="/blogs" onClick={() => setMenuOpen(false)}>Blogs</Link></li>
+                                <li><Link to="/myblogs" onClick={() => setMenuOpen(false)}>My Blogs</Link></li>
+                                <li><Link to="/create" onClick={() => setMenuOpen(false)}>Create Blog</Link></li>
                                 <li>
                                     <button onClick={handleLogout} className="bg-white text-[#08436B] px-4 py-2 rounded-md mt-6">Logout</button>
                                 </li>

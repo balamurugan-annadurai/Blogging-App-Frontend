@@ -5,15 +5,7 @@ import { Button } from "../../../components/button";
 import toast, { Toaster } from "react-hot-toast";
 import blogService from "../../../lib/services/blogs/blogService";
 import { FilterSelect } from "../../../components/filterSelect";
-
-const categoryOptions = [
-    { value: "Career", label: "Career" },
-    { value: "Finance", label: "Finance" },
-    { value: "Travel", label: "Travel" },
-    { value: "Health", label: "Health" },
-    { value: "Education", label: "Education" },
-    { value: "Agriculture", label: "Agriculture" },
-];
+import { categoryOptions } from "../../../utils/categoryOptions";
 
 const CreateBlog = () => {
     const navigate = useNavigate();
