@@ -16,8 +16,8 @@ const EditBlog = () => {
         title: "",
         content: "",
         category: "",
-        image: null,
-        imageUrl: "",
+        image: null,     // base64 string for backend
+        imageUrl: "",    // for preview
     });
     const [isChanged, setIsChanged] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -68,12 +68,16 @@ const EditBlog = () => {
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
-            setForm((prev) => ({
-                ...prev,
-                image: file,
-                imageUrl: URL.createObjectURL(file),
-            }));
-            setIsChanged(true);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setForm((prev) => ({
+                    ...prev,
+                    image: reader.result,      // Base64 string to send backend
+                    imageUrl: reader.result,   // For preview in UI
+                }));
+                setIsChanged(true);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -87,7 +91,7 @@ const EditBlog = () => {
                 title: form.title,
                 content: form.content,
                 category: form.category,
-                image: form.imageUrl,
+                image: form.image,  // base64 image string here
             };
 
             await blogService.updateBlog(id, updatedData);
